@@ -90,9 +90,8 @@ def respond(sock):
     parts = request.split()
     if len(parts) > 1 and parts[0] == "GET":
         filename = parts[1]
-        if '..' not in filename and '~' not in filename and '//' not in filename:
+        if '..' not in filename and '~' not in filename and '//' not in filename and ('.html' in filename or '.css' in filename or filename=='/'):
             fullfilename = os.path.abspath(DOCROOT + filename)
-            log.info(fullfilename)
             if (os.path.isfile(fullfilename)):
                 transmit(STATUS_OK, sock)
                 transmit(open(fullfilename).read(), sock)
@@ -101,7 +100,6 @@ def respond(sock):
                 transmit("404: " + filename + " could not be found.", sock)
         else:
             transmit(STATUS_FORBIDDEN, sock)
-            transmit("403, Forbidden: This url contains an illegal character sequence.", sock)
     else:
         log.info("Unhandled request: {}".format(request))
         transmit(STATUS_NOT_IMPLEMENTED, sock)
