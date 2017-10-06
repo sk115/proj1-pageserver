@@ -22,7 +22,7 @@ log = logging.getLogger(__name__)
 
 import socket    # Basic TCP/IP communication on the internet
 import _thread   # Response computation runs concurrently with main program
-
+import os
 
 def listen(portnum):
     """
@@ -80,19 +80,28 @@ STATUS_NOT_IMPLEMENTED = "HTTP/1.0 401 Not Implemented\n\n"
 
 def respond(sock):
     """
-    This server responds only to GET requests (not PUT, POST, or UPDATE).
-    Any valid GET request is answered with an ascii graphic of a cat.
+    This server responds only to GET requests.
     """
     sent = 0
     request = sock.recv(1024)  # We accept only short requests
     request = str(request, encoding='utf-8', errors='strict')
     log.info("--- Received request ----")
     log.info("Request was {}\n***\n".format(request))
-
     parts = request.split()
     if len(parts) > 1 and parts[0] == "GET":
-        transmit(STATUS_OK, sock)
-        transmit(CAT, sock)
+        filename = parts[1]
+        if '..' not in filename and '~' not in filename and '//' not in filename:
+            fullfilename = os.path.abspath(DOCROOT + filename)
+            log.info(fullfilename)
+            if (os.path.isfile(fullfilename)):
+                transmit(STATUS_OK, sock)
+                transmit(open(fullfilename).read(), sock)
+            else:
+                transmit(STATUS_NOT_FOUND, sock)
+                transmit("404: " + filename + " could not be found.", sock)
+        else:
+            transmit(STATUS_FORBIDDEN, sock)
+            transmit("403, Forbidden: This url contains an illegal character sequence.", sock)
     else:
         log.info("Unhandled request: {}".format(request))
         transmit(STATUS_NOT_IMPLEMENTED, sock)
@@ -138,11 +147,13 @@ def get_options():
 def main():
     options = get_options()
     port = options.PORT
+    global DOCROOT 
+    DOCROOT = os.path.abspath(options.DOCROOT)
     if options.DEBUG:
         log.setLevel(logging.DEBUG)
     sock = listen(port)
-    log.info("Listening on port {}".format(port))
-    log.info("Socket is {}".format(sock))
+    # log.info("Listening on port {}".format(port))
+    # log.info("Socket is {}".format(sock))
     serve(sock, respond)
 
 
