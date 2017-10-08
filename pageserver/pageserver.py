@@ -91,15 +91,10 @@ def respond(sock):
     parts = request.split()
     if len(parts) > 1 and parts[0] == "GET":
         filename = parts[1]
-<<<<<<< HEAD
         # Check that filename is an html or css file and doesn't contain an illegal character
         if '..' not in filename and '~' not in filename and '//' not in filename and ('.html' in filename or '.css' in filename or filename is '/'):
             fullfilename = os.path.abspath(DOCROOT + filename)
             log.debug(fullfilename)
-=======
-        if '..' not in filename and '~' not in filename and '//' not in filename and ('.html' in filename or '.css' in filename or filename=='/'):
-            fullfilename = os.path.abspath(DOCROOT + filename)
->>>>>>> 8b9913dfd814376f938730f2af8d2d7b41833719
             if (os.path.isfile(fullfilename)):
                 transmit(STATUS_OK, sock)
                 transmit(open(fullfilename).read(), sock)
@@ -109,11 +104,8 @@ def respond(sock):
                 transmit("404: " + filename + " could not be found.", sock)
         else:
             transmit(STATUS_FORBIDDEN, sock)
-<<<<<<< HEAD
             transmit("403: Forbidden", sock)
     # Reject non-GET requests
-=======
->>>>>>> 8b9913dfd814376f938730f2af8d2d7b41833719
     else:
         log.info("Unhandled request: {}".format(request))
         transmit(STATUS_NOT_IMPLEMENTED, sock)
