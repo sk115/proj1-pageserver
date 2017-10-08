@@ -80,28 +80,32 @@ STATUS_NOT_IMPLEMENTED = "HTTP/1.0 401 Not Implemented\n\n"
 
 def respond(sock):
     """
-    This server responds only to GET requests.
+    This server responds only to GET requests for HTML and CSS files
+    It rejects all other requests and includes cases for filtering some illegal character requests for security
     """
     sent = 0
     request = sock.recv(1024)  # We accept only short requests
     request = str(request, encoding='utf-8', errors='strict')
-    log.info("--- Received request ----")
-    log.info("Request was {}\n***\n".format(request))
+    log.debug("--- Received request ----")
+    log.debug("Request was {}\n***\n".format(request))
     parts = request.split()
     if len(parts) > 1 and parts[0] == "GET":
         filename = parts[1]
-        if '..' not in filename and '~' not in filename and '//' not in filename:
+        # Check that filename is an html or css file and doesn't contain an illegal character
+        if '..' not in filename and '~' not in filename and '//' not in filename and ('.html' in filename or '.css' in filename or filename is '/'):
             fullfilename = os.path.abspath(DOCROOT + filename)
-            log.info(fullfilename)
+            log.debug(fullfilename)
             if (os.path.isfile(fullfilename)):
                 transmit(STATUS_OK, sock)
                 transmit(open(fullfilename).read(), sock)
+            # Handle missing file requests
             else:
                 transmit(STATUS_NOT_FOUND, sock)
                 transmit("404: " + filename + " could not be found.", sock)
         else:
             transmit(STATUS_FORBIDDEN, sock)
-            transmit("403, Forbidden: This url contains an illegal character sequence.", sock)
+            transmit("403: Forbidden", sock)
+    # Reject non-GET requests
     else:
         log.info("Unhandled request: {}".format(request))
         transmit(STATUS_NOT_IMPLEMENTED, sock)
@@ -124,7 +128,6 @@ def transmit(msg, sock):
 # Run from command line
 #
 ###
-
 
 def get_options():
     """
